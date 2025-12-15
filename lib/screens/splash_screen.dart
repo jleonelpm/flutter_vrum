@@ -69,7 +69,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 10),
               const Text(
-                'Aplicación de Vehículos',
+                'VRUM',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.white70,

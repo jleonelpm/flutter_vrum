@@ -39,7 +39,7 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 40),
                 const Text(
-                  '¡Bienvenido a la aplicacion!',
+                  '¡Bienvenido a la VRUM!',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
