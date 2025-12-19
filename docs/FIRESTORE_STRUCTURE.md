@@ -16,8 +16,9 @@ Este documento describe las colecciones y campos usados por la app en entorno lo
   - `description`: string
   - `emoji`: string
   - `price`: number (entero)
+  - `lugar`: string (ubicación física del vehículo)
   - `createdAt`: timestamp (fecha de publicación)
-  - Futuro: `images[]`, `location`
+  - Futuro: `images[]`
 
 - `comments` (futuro)
   - `vehicleId`: string (document id de `vehicles`)
