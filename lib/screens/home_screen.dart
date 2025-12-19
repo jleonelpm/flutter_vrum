@@ -1,48 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'initial_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  // Datos estáticos de vehículos
-  static final List<Map<String, String>> vehicles = [
-    {
-      'title': 'Toyota Corolla 2022',
-      'description': 'Sedán compacto en excelentes condiciones',
-      'price': '\$18,500',
-      'icon': '🏎️',
-    },
-    {
-      'title': 'Honda Civic 2020',
-      'description': 'Sedán deportivo, poco kilometraje',
-      'price': '\$16,800',
-      'icon': '🚗',
-    },
-    {
-      'title': 'Chevrolet Malibu 2021',
-      'description': 'Sedán de lujo con características premium',
-      'price': '\$19,200',
-      'icon': '🚙',
-    },
-    {
-      'title': 'Ford Fusion 2019',
-      'description': 'Vehículo familiar confiable',
-      'price': '\$14,500',
-      'icon': '🏎️',
-    },
-    {
-      'title': 'BMW Serie 3 2023',
-      'description': 'Vehículo premium con tecnología avanzada',
-      'price': '\$45,000',
-      'icon': '🚗',
-    },
-    {
-      'title': 'Mazda CX-5 2021',
-      'description': 'SUV compacto versátil y eficiente',
-      'price': '\$28,500',
-      'icon': '🚙',
-    },
-  ];
+  Stream<QuerySnapshot<Map<String, dynamic>>> _vehicleStream() {
+    return FirebaseFirestore.instance
+        .collection('vehicles')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
+  Future<String> _currentUserName() async {
+    final email = FirebaseAuth.instance.currentUser?.email;
+    if (email == null || email.isEmpty) return 'Invitado';
+    final snap = await FirebaseFirestore.instance
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return email;
+    final data = snap.docs.first.data();
+    final name = data['fullName'];
+    return (name is String && name.isNotEmpty) ? name : email;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,23 +40,29 @@ class HomeScreen extends StatelessWidget {
           // Sección de usuario
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Usuario: Juan Perez',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurple,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Esta es la pantalla principal de la aplicacion.',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-              ],
+            child: FutureBuilder<String>(
+              future: _currentUserName(),
+              builder: (context, snapshot) {
+                final name = snapshot.data ?? 'Usuario';
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Usuario: $name',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Esta es la pantalla principal de la aplicacion.',
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           // Título de publicaciones
@@ -91,15 +80,43 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 12),
           // Lista desplazable de vehículos
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              itemCount: vehicles.length,
-              itemBuilder: (context, index) {
-                return _buildVehicleCard(
-                  title: vehicles[index]['title']!,
-                  description: vehicles[index]['description']!,
-                  price: vehicles[index]['price']!,
-                  icon: vehicles[index]['icon']!,
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _vehicleStream(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                final docs = snapshot.data?.docs ?? [];
+                if (docs.isEmpty) {
+                  return const Center(
+                    child: Text('No hay vehículos disponibles'),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final data = docs[index].data();
+                    final ts = data['createdAt'];
+                    String published = '';
+                    if (ts is Timestamp) {
+                      final dt = ts.toDate();
+                      published =
+                          '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}'
+                              .toString();
+                    }
+                    return _buildVehicleCard(
+                      title: (data['name'] ?? '') as String,
+                      description: (data['description'] ?? '') as String,
+                      price: 'USD ${(data['price'] ?? 0).toString()}',
+                      icon: (data['emoji'] ?? '🚗') as String,
+                      publishedAt: published,
+                      ownerName: (data['ownerName'] ?? 'Anónimo') as String,
+                    );
+                  },
                 );
               },
             ),
@@ -122,6 +139,8 @@ class HomeScreen extends StatelessWidget {
     required String description,
     required String price,
     required String icon,
+    required String publishedAt,
+    required String ownerName,
   }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -161,10 +180,26 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
+                    'Por: $ownerName',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
                     description,
                     style: const TextStyle(fontSize: 13, color: Colors.grey),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    publishedAt.isNotEmpty
+                        ? 'Publicado: $publishedAt'
+                        : 'Publicado: —',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -199,8 +234,10 @@ class HomeScreen extends StatelessWidget {
               child: const Text('Cancelar'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
+                await FirebaseAuth.instance.signOut();
+                // Go back to initial screen after sign-out
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(

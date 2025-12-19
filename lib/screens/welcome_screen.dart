@@ -1,8 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'home_screen.dart';
 
-class WelcomeScreen extends StatelessWidget {
+class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
+
+  @override
+  State<WelcomeScreen> createState() => _WelcomeScreenState();
+}
+
+class _WelcomeScreenState extends State<WelcomeScreen> {
+  final _emailCtrl = TextEditingController(text: 'usuario.demo1@test.com');
+  final _passCtrl = TextEditingController(text: '123456');
+  bool _loading = false;
+  String? _error;
+
+  Future<void> _signIn() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text,
+      );
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } on FirebaseAuthException catch (e) {
+      String msg = 'Error de autenticación';
+      if (e.code == 'user-not-found') msg = 'Usuario no encontrado';
+      if (e.code == 'wrong-password') msg = 'Contraseña incorrecta';
+      if (e.code == 'invalid-credential') msg = 'Credenciales inválidas';
+      setState(() => _error = msg);
+    } catch (e) {
+      setState(() => _error = 'Error inesperado');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,46 +99,70 @@ class WelcomeScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 50),
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(50),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 10,
-                        spreadRadius: 2,
+                const SizedBox(height: 30),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        controller: _emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          hintText: 'Correo electrónico',
+                          filled: true,
+                          fillColor: Colors.white,
+                          prefixIcon: const Icon(Icons.email),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _passCtrl,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          hintText: 'Contraseña',
+                          filled: true,
+                          fillColor: Colors.white,
+                          prefixIcon: const Icon(Icons.lock),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      if (_error != null)
+                        Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.yellowAccent),
+                          textAlign: TextAlign.center,
+                        ),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: _loading ? null : _signIn,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.purple,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 45,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                        ),
+                        child: Text(
+                          _loading ? 'Ingresando…' : 'Ingresar',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HomeScreen(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.purple,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 45,
-                        vertical: 14,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                    ),
-                    child: const Text(
-                      'Continuar',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
-                    ),
                   ),
                 ),
               ],
