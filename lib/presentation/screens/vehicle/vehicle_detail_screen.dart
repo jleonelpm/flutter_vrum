@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../widgets/info_section.dart';
 
 class VehicleDetailScreen extends StatelessWidget {
   final String vehicleId;
@@ -124,40 +125,88 @@ class VehicleDetailScreen extends StatelessWidget {
                       const SizedBox(height: 24),
 
                       // Ubicación
-                      _buildInfoSection(
+                      InfoSection(
+                        label: 'Ubicación',
+                        value: lugar,
                         icon: Icons.location_on,
-                        iconColor: Colors.red,
-                        title: 'Ubicación',
-                        content: lugar,
                       ),
                       const SizedBox(height: 20),
 
                       // Descripción
-                      _buildInfoSection(
+                      InfoSection(
+                        label: 'Descripción',
+                        value: description,
                         icon: Icons.description,
-                        iconColor: Colors.blue,
-                        title: 'Descripción',
-                        content: description,
                       ),
                       const SizedBox(height: 20),
 
                       // Información del propietario
-                      _buildInfoSection(
-                        icon: Icons.person,
-                        iconColor: Colors.deepPurple,
-                        title: 'Publicado por',
-                        content: ownerName,
-                        subtitle: ownerEmail,
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.deepPurple.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.person,
+                                color: Colors.deepPurple,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Publicado por',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    ownerName,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    ownerEmail,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 20),
 
                       // Fecha de publicación
                       if (publishedDate.isNotEmpty)
-                        _buildInfoSection(
+                        InfoSection(
+                          label: 'Fecha de publicación',
+                          value: publishedDate,
                           icon: Icons.calendar_today,
-                          iconColor: Colors.orange,
-                          title: 'Fecha de publicación',
-                          content: publishedDate,
                         ),
                       const SizedBox(height: 32),
 
@@ -201,68 +250,6 @@ class VehicleDetailScreen extends StatelessWidget {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildInfoSection({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String content,
-    String? subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  content,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

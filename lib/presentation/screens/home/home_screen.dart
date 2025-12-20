@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'initial_screen.dart';
-import 'vehicle_detail_screen.dart';
+import '../auth/initial_screen.dart';
+import '../vehicle/vehicle_detail_screen.dart';
+import '../../widgets/vehicle_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -110,8 +111,7 @@ class HomeScreen extends StatelessWidget {
                           '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}'
                               .toString();
                     }
-                    return _buildVehicleCard(
-                      context: context,
+                    return VehicleCard(
                       vehicleId: vehicleId,
                       title: (data['name'] ?? '') as String,
                       description: (data['description'] ?? '') as String,
@@ -119,6 +119,14 @@ class HomeScreen extends StatelessWidget {
                       icon: (data['emoji'] ?? '🚗') as String,
                       publishedAt: published,
                       ownerName: (data['ownerName'] ?? 'Anónimo') as String,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => VehicleDetailScreen(vehicleId: vehicleId),
+                          ),
+                        );
+                      },
                     );
                   },
                 );
@@ -134,103 +142,6 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: Colors.deepPurple,
         label: const Text('Cerrar Sesion'),
         icon: const Icon(Icons.logout),
-      ),
-    );
-  }
-
-  Widget _buildVehicleCard({
-    required BuildContext context,
-    required String vehicleId,
-    required String title,
-    required String description,
-    required String price,
-    required String icon,
-    required String publishedAt,
-    required String ownerName,
-  }) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => VehicleDetailScreen(vehicleId: vehicleId),
-          ),
-        );
-      },
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 12),
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            children: [
-              // Imagen ilustrativa (icono)
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: Colors.deepPurple.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(icon, style: const TextStyle(fontSize: 40)),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Información del vehículo
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Por: $ownerName',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.deepPurple,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      description,
-                      style: const TextStyle(fontSize: 13, color: Colors.grey),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      publishedAt.isNotEmpty
-                          ? 'Publicado: $publishedAt'
-                          : 'Publicado: —',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      price,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

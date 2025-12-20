@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'home_screen.dart';
+import '../home/home_screen.dart';
+import '../../../data/services/firebase_auth_service.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -12,6 +13,7 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final _emailCtrl = TextEditingController(text: 'usuario.demo1@test.com');
   final _passCtrl = TextEditingController(text: '123456');
+  final _authService = FirebaseAuthService();
   bool _loading = false;
   String? _error;
 
@@ -21,7 +23,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       _error = null;
     });
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      await _authService.signInWithEmailAndPassword(
         email: _emailCtrl.text.trim(),
         password: _passCtrl.text,
       );
