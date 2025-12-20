@@ -43,3 +43,24 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase Emulator Local
+.firebase-data/
+firebase-debug.log
+
+# Environment & Local Config
+.env
+.env.local
+*.env
+local.properties
+
+# Android Build
+/android/build/
+/android/.gradle/
+
+# IDE Additional
+.vscode/launch.json
+.vscode/settings.json
+
+# OS
+Thumbs.db
