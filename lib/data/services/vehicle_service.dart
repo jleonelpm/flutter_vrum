@@ -39,6 +39,17 @@ class VehicleService {
     }
   }
 
+  /// Crear vehículo y retornar la referencia del documento (para acceder al ID).
+  Future<DocumentReference<Map<String, dynamic>>> createVehicleAndGetRef(
+    VehicleModel vehicle,
+  ) async {
+    try {
+      return await _firestore.collection('vehicles').add(vehicle.toMap());
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> updateVehicle(
     String vehicleId,
     Map<String, dynamic> data,

@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 
@@ -19,6 +20,7 @@ class FirebaseConfig {
         appId: appId,
         projectId: projectId,
         messagingSenderId: messagingSenderId,
+        storageBucket: 'demo-vrum.appspot.com',
       ),
     );
 
@@ -33,6 +35,8 @@ class FirebaseConfig {
       FirebaseAuth.instance.useAuthEmulator(host, 9099);
       // Firestore Emulator
       FirebaseFirestore.instance.useFirestoreEmulator(host, 8084);
+      // Storage Emulator
+      FirebaseStorage.instance.useStorageEmulator(host, 9199);
     }
   }
 }

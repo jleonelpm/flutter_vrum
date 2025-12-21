@@ -79,6 +79,7 @@ class MyPublicationsScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final data = docs[index].data();
               final vehicleId = docs[index].id;
+              final images = List<String>.from(data['images'] ?? []);
               return Dismissible(
                 key: ValueKey(vehicleId),
                 direction: DismissDirection.endToStart,
@@ -113,6 +114,7 @@ class MyPublicationsScreen extends StatelessWidget {
                   icon: (data['emoji'] ?? '🚗') as String,
                   publishedAt: _formatTimestamp(data['createdAt']),
                   ownerName: (data['ownerName'] ?? 'Anónimo') as String,
+                  imageUrl: images.isNotEmpty ? images.first : null,
                   onTap: () {
                     Navigator.push(
                       context,

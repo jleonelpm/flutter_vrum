@@ -9,6 +9,7 @@ class VehicleModel {
   final String emoji;
   final int price;
   final String lugar;
+  final List<String> images;
   final DateTime? createdAt;
 
   const VehicleModel({
@@ -20,6 +21,7 @@ class VehicleModel {
     required this.emoji,
     required this.price,
     required this.lugar,
+    this.images = const [],
     this.createdAt,
   });
 
@@ -35,6 +37,7 @@ class VehicleModel {
           ? (map['price'] as int)
           : int.tryParse(map['price'].toString()) ?? 0,
       lugar: map['lugar'] ?? 'No especificado',
+      images: List<String>.from(map['images'] ?? []),
       createdAt: map['createdAt'] is Timestamp
           ? (map['createdAt'] as Timestamp).toDate()
           : null,
@@ -50,6 +53,7 @@ class VehicleModel {
       'emoji': emoji,
       'price': price,
       'lugar': lugar,
+      'images': images,
       'createdAt': createdAt != null
           ? Timestamp.fromDate(createdAt!)
           : FieldValue.serverTimestamp(),
@@ -65,6 +69,7 @@ class VehicleModel {
     String? emoji,
     int? price,
     String? lugar,
+    List<String>? images,
     DateTime? createdAt,
   }) {
     return VehicleModel(
@@ -76,6 +81,7 @@ class VehicleModel {
       emoji: emoji ?? this.emoji,
       price: price ?? this.price,
       lugar: lugar ?? this.lugar,
+      images: images ?? this.images,
       createdAt: createdAt ?? this.createdAt,
     );
   }

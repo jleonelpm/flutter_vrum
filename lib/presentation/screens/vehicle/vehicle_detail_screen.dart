@@ -41,6 +41,7 @@ class VehicleDetailScreen extends StatelessWidget {
           final ownerEmail = data['ownerEmail'] ?? '';
           final lugar = data['lugar'] ?? 'No especificado';
           final createdAt = data['createdAt'];
+          final images = List<String>.from(data['images'] ?? []);
 
           String publishedDate = '';
           if (createdAt is Timestamp) {
@@ -53,23 +54,26 @@ class VehicleDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Hero section con emoji
-                Container(
-                  height: 250,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.deepPurple.shade400,
-                        Colors.deepPurple.shade700,
-                      ],
+                // Carrusel de imágenes o emoji
+                if (images.isNotEmpty)
+                  _buildImageCarousel(images)
+                else
+                  Container(
+                    height: 250,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.deepPurple.shade400,
+                          Colors.deepPurple.shade700,
+                        ],
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(emoji, style: const TextStyle(fontSize: 120)),
                     ),
                   ),
-                  child: Center(
-                    child: Text(emoji, style: const TextStyle(fontSize: 120)),
-                  ),
-                ),
 
                 // Contenido
                 Padding(
@@ -251,6 +255,80 @@ class VehicleDetailScreen extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildImageCarousel(List<String> images) {
+    return StatefulBuilder(
+      builder: (context, setState) {
+        int currentIndex = 0;
+
+        return Column(
+          children: [
+            SizedBox(
+              height: 250,
+              child: PageView.builder(
+                onPageChanged: (index) => setState(() => currentIndex = index),
+                itemCount: images.length,
+                itemBuilder: (context, index) {
+                  return Container(
+                    color: Colors.grey.shade200,
+                    child: Image.network(
+                      images[index],
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, stackTrace) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.image_not_supported, size: 48),
+                            const SizedBox(height: 8),
+                            Text('Error cargando imagen ${index + 1}'),
+                          ],
+                        ),
+                      ),
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: progress.expectedTotalBytes != null
+                                ? progress.cumulativeBytesLoaded /
+                                      progress.expectedTotalBytes!
+                                : null,
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+            // Indicadores de página
+            if (images.length > 1)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    images.length,
+                    (index) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: currentIndex == index
+                              ? Colors.deepPurple
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
