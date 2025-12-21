@@ -9,6 +9,7 @@ class VehicleCard extends StatelessWidget {
   final String publishedAt;
   final String ownerName;
   final VoidCallback onTap;
+  final String? imageUrl; // Thumbnail de la primera imagen
 
   const VehicleCard({
     super.key,
@@ -20,6 +21,7 @@ class VehicleCard extends StatelessWidget {
     required this.publishedAt,
     required this.ownerName,
     required this.onTap,
+    this.imageUrl,
   });
 
   @override
@@ -34,16 +36,36 @@ class VehicleCard extends StatelessWidget {
           padding: const EdgeInsets.all(12.0),
           child: Row(
             children: [
-              // Imagen ilustrativa (icono)
+              // Imagen o icono
               Container(
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
                   color: Colors.deepPurple.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
+                  border: imageUrl != null
+                      ? Border.all(color: Colors.deepPurple)
+                      : null,
                 ),
-                child: Center(
-                  child: Text(icon, style: const TextStyle(fontSize: 40)),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: imageUrl != null
+                      ? Image.network(
+                          imageUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (ctx, err, stackTrace) => Center(
+                            child: Text(
+                              icon,
+                              style: const TextStyle(fontSize: 40),
+                            ),
+                          ),
+                        )
+                      : Center(
+                          child: Text(
+                            icon,
+                            style: const TextStyle(fontSize: 40),
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(width: 12),

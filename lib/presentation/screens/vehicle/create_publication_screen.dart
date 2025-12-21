@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../data/models/vehicle_model.dart';
 import '../../../data/services/vehicle_service.dart';
+import '../../../data/services/storage_service.dart';
 
 class CreatePublicationScreen extends StatefulWidget {
   const CreatePublicationScreen({super.key});
@@ -20,6 +23,9 @@ class _CreatePublicationScreenState extends State<CreatePublicationScreen> {
   final _lugarCtrl = TextEditingController();
   bool _saving = false;
   final _service = VehicleService();
+  final _storageService = StorageService();
+  final _imagePicker = ImagePicker();
+  List<String> _selectedImagePaths = [];
 
   @override
   void dispose() {
@@ -29,6 +35,39 @@ class _CreatePublicationScreenState extends State<CreatePublicationScreen> {
     _priceCtrl.dispose();
     _lugarCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImages() async {
+    try {
+      final pickedFiles = await _imagePicker.pickMultiImage(
+        imageQuality: 85,
+        maxWidth: 1200,
+        maxHeight: 1200,
+      );
+
+      if (pickedFiles.isEmpty) return;
+
+      setState(() {
+        _selectedImagePaths = pickedFiles.map((f) => f.path).toList();
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${_selectedImagePaths.length} imágenes seleccionadas'),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al seleccionar imágenes: $e')),
+      );
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImagePaths.removeAt(index);
+    });
   }
 
   Future<void> _save() async {
@@ -42,20 +81,40 @@ class _CreatePublicationScreenState extends State<CreatePublicationScreen> {
     }
     setState(() => _saving = true);
     try {
-      final vehicle = VehicleModel(
-        ownerEmail: user.email!,
-        ownerName: user.displayName ?? user.email!,
-        name: _nameCtrl.text.trim(),
-        description: _descriptionCtrl.text.trim(),
-        emoji: _emojiCtrl.text.isNotEmpty ? _emojiCtrl.text.trim() : '🚗',
-        price: int.parse(_priceCtrl.text.trim()),
-        lugar: _lugarCtrl.text.trim(),
-        createdAt: DateTime.now(),
+      // Crear documento de vehículo primero (para obtener ID)
+      final vehicleDoc = await _service.createVehicleAndGetRef(
+        VehicleModel(
+          ownerEmail: user.email!,
+          ownerName: user.displayName ?? user.email!,
+          name: _nameCtrl.text.trim(),
+          description: _descriptionCtrl.text.trim(),
+          emoji: _emojiCtrl.text.isNotEmpty ? _emojiCtrl.text.trim() : '🚗',
+          price: int.parse(_priceCtrl.text.trim()),
+          lugar: _lugarCtrl.text.trim(),
+          createdAt: DateTime.now(),
+        ),
       );
-      await _service.createVehicle(vehicle);
+
+      List<String> imageUrls = [];
+
+      // Subir imágenes si las hay
+      if (_selectedImagePaths.isNotEmpty) {
+        imageUrls = await _storageService.uploadMultipleImages(
+          _selectedImagePaths,
+          vehicleDoc.id,
+        );
+
+        // Actualizar documento con URLs de imágenes
+        await vehicleDoc.update({'images': imageUrls});
+      }
+
       if (!mounted) return;
       Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Publicación creada exitosamente')),
+      );
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error al guardar: $e')));
@@ -123,6 +182,9 @@ class _CreatePublicationScreenState extends State<CreatePublicationScreen> {
                     (v == null || v.trim().isEmpty) ? 'Ingresa el lugar' : null,
               ),
               const SizedBox(height: 20),
+              // Sección de imágenes
+              _buildImageSection(),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _saving ? null : _save,
                 style: ElevatedButton.styleFrom(
@@ -133,12 +195,85 @@ class _CreatePublicationScreenState extends State<CreatePublicationScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text(_saving ? 'Guardando...' : 'Guardar Publicación'),
+                child: Text(_saving ? 'Guardando...' : 'Crear Publicación'),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildImageSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Imágenes (opcional)',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          onPressed: _saving ? null : _pickImages,
+          icon: const Icon(Icons.image),
+          label: const Text('Seleccionar imágenes'),
+        ),
+        if (_selectedImagePaths.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text(
+            '${_selectedImagePaths.length} imagen(es) seleccionada(s)',
+            style: const TextStyle(color: Colors.green, fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 100,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _selectedImagePaths.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                return Stack(
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.deepPurple),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          File(_selectedImagePaths[index]),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: -8,
+                      right: -8,
+                      child: GestureDetector(
+                        onTap: () => _removeImage(index),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: const Icon(
+                            Icons.close,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

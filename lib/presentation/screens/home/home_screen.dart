@@ -128,6 +128,7 @@ class HomeScreen extends StatelessWidget {
                     final data = docs[index].data();
                     final vehicleId = docs[index].id;
                     final ts = data['createdAt'];
+                    final images = List<String>.from(data['images'] ?? []);
                     String published = '';
                     if (ts is Timestamp) {
                       final dt = ts.toDate();
@@ -143,6 +144,7 @@ class HomeScreen extends StatelessWidget {
                       icon: (data['emoji'] ?? '🚗') as String,
                       publishedAt: published,
                       ownerName: (data['ownerName'] ?? 'Anónimo') as String,
+                      imageUrl: images.isNotEmpty ? images.first : null,
                       onTap: () {
                         Navigator.push(
                           context,
