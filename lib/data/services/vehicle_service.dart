@@ -49,4 +49,12 @@ class VehicleService {
       rethrow;
     }
   }
+
+  Future<void> deleteVehicle(String vehicleId) async {
+    try {
+      await _firestore.collection('vehicles').doc(vehicleId).delete();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
