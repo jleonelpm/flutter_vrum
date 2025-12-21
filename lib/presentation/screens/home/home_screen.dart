@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../auth/initial_screen.dart';
 import '../vehicle/vehicle_detail_screen.dart';
+import '../vehicle/create_publication_screen.dart';
+import '../vehicle/my_publications_screen.dart';
 import '../../widgets/vehicle_card.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -35,6 +37,14 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Inicio'),
         backgroundColor: Colors.deepPurple,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              _showLogoutDialog(context);
+            },
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,10 +68,6 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Esta es la pantalla principal de la aplicacion.',
-                      style: TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
                   ],
                 );
               },
@@ -70,13 +76,31 @@ class HomeScreen extends StatelessWidget {
           // Título de publicaciones
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: const Text(
-              'Publicaciones de Vehículos',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.deepPurple,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Vehículos',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurple,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => MyPublicationsScreen()),
+                    );
+                  },
+                  icon: const Icon(
+                    Icons.folder_shared,
+                    color: Colors.deepPurple,
+                  ),
+                  label: const Text('Mis publicaciones'),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
@@ -123,7 +147,8 @@ class HomeScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => VehicleDetailScreen(vehicleId: vehicleId),
+                            builder: (_) =>
+                                VehicleDetailScreen(vehicleId: vehicleId),
                           ),
                         );
                       },
@@ -137,11 +162,14 @@ class HomeScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          _showLogoutDialog(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CreatePublicationScreen()),
+          );
         },
         backgroundColor: Colors.deepPurple,
-        label: const Text('Cerrar Sesion'),
-        icon: const Icon(Icons.logout),
+        label: const Text('Publicar'),
+        icon: const Icon(Icons.add),
       ),
     );
   }

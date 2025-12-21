@@ -11,8 +11,8 @@ class VehicleModel {
   final String lugar;
   final DateTime? createdAt;
 
-  VehicleModel({
-    required this.id,
+  const VehicleModel({
+    this.id = '',
     required this.ownerEmail,
     required this.ownerName,
     required this.name,
@@ -31,9 +31,11 @@ class VehicleModel {
       name: map['name'] ?? '',
       description: map['description'] ?? '',
       emoji: map['emoji'] ?? '🚗',
-      price: map['price'] ?? 0,
+      price: (map['price'] ?? 0) is int
+          ? (map['price'] as int)
+          : int.tryParse(map['price'].toString()) ?? 0,
       lugar: map['lugar'] ?? 'No especificado',
-      createdAt: map['createdAt'] != null
+      createdAt: map['createdAt'] is Timestamp
           ? (map['createdAt'] as Timestamp).toDate()
           : null,
     );
@@ -48,7 +50,33 @@ class VehicleModel {
       'emoji': emoji,
       'price': price,
       'lugar': lugar,
-      'createdAt': createdAt?.toIso8601String(),
+      'createdAt': createdAt != null
+          ? Timestamp.fromDate(createdAt!)
+          : FieldValue.serverTimestamp(),
     };
+  }
+
+  VehicleModel copyWith({
+    String? id,
+    String? ownerEmail,
+    String? ownerName,
+    String? name,
+    String? description,
+    String? emoji,
+    int? price,
+    String? lugar,
+    DateTime? createdAt,
+  }) {
+    return VehicleModel(
+      id: id ?? this.id,
+      ownerEmail: ownerEmail ?? this.ownerEmail,
+      ownerName: ownerName ?? this.ownerName,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      emoji: emoji ?? this.emoji,
+      price: price ?? this.price,
+      lugar: lugar ?? this.lugar,
+      createdAt: createdAt ?? this.createdAt,
+    );
   }
 }

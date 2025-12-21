@@ -11,6 +11,16 @@ class VehicleService {
         .snapshots();
   }
 
+  Stream<QuerySnapshot<Map<String, dynamic>>> getMyVehiclesStream(
+    String email,
+  ) {
+    return _firestore
+        .collection('vehicles')
+        .where('ownerEmail', isEqualTo: email)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+  }
+
   Future<VehicleModel?> getVehicleById(String vehicleId) async {
     try {
       final doc = await _firestore.collection('vehicles').doc(vehicleId).get();
@@ -24,6 +34,17 @@ class VehicleService {
   Future<void> createVehicle(VehicleModel vehicle) async {
     try {
       await _firestore.collection('vehicles').add(vehicle.toMap());
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> updateVehicle(
+    String vehicleId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      await _firestore.collection('vehicles').doc(vehicleId).update(data);
     } catch (e) {
       rethrow;
     }
