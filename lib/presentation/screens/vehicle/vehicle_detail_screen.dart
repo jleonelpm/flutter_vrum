@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/info_section.dart';
+import '../qa/qa_screen.dart';
 
 class VehicleDetailScreen extends StatelessWidget {
   final String vehicleId;
@@ -38,6 +39,7 @@ class VehicleDetailScreen extends StatelessWidget {
           final emoji = data['emoji'] ?? '🚗';
           final price = data['price'] ?? 0;
           final ownerName = data['ownerName'] ?? 'Anónimo';
+          final ownerId = data['ownerId'] ?? '';
           final ownerEmail = data['ownerEmail'] ?? '';
           final lugar = data['lugar'] ?? 'No especificado';
           final createdAt = data['createdAt'];
@@ -214,38 +216,76 @@ class VehicleDetailScreen extends StatelessWidget {
                         ),
                       const SizedBox(height: 32),
 
-                      // Botón de contacto
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            // TODO: Implementar contacto
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Contactar a $ownerName (Próximamente)',
+                      // Botones de acción
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                // TODO: Implementar contacto directo
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Contactar a $ownerName (Próximamente)',
+                                    ),
+                                    backgroundColor: Colors.deepPurple,
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.message),
+                              label: const Text(
+                                'Contactar',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                backgroundColor: Colors.deepPurple,
                               ),
-                            );
-                          },
-                          icon: const Icon(Icons.message),
-                          label: const Text(
-                            'Contactar al vendedor',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepPurple,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                             ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => QAScreen(
+                                      vehicleId: vehicleId,
+                                      sellerUserId: ownerId,
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.help_outline),
+                              label: const Text(
+                                'Preguntas',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),

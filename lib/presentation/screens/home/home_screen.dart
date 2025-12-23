@@ -277,6 +277,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             publishedAt: vehicle.createdAt?.toString() ?? '',
                             ownerName: vehicle.ownerName,
                             imageUrl: imageUrl,
+                            isSold: vehicle.isSold,
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -391,6 +392,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             final vehicleId = docs[index].id;
             final ts = data['createdAt'];
             final images = List<String>.from(data['images'] ?? []);
+            final isSold = data['isSold'] ?? false;
             String published = '';
             if (ts is Timestamp) {
               final dt = ts.toDate();
@@ -407,6 +409,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               publishedAt: published,
               ownerName: (data['ownerName'] ?? 'Anónimo') as String,
               imageUrl: images.isNotEmpty ? images.first : null,
+              isSold: isSold,
               onTap: () {
                 Navigator.push(
                   context,

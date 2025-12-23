@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/services/vehicle_service.dart';
 import '../../widgets/vehicle_card.dart';
 import 'edit_publication_screen.dart';
+import '../../screens/qa/qa_screen.dart';
+import '../../../providers/notification_provider.dart';
 
-class MyPublicationsScreen extends StatelessWidget {
+class MyPublicationsScreen extends ConsumerWidget {
   const MyPublicationsScreen({super.key});
 
   String _formatTimestamp(dynamic ts) {
@@ -41,7 +44,7 @@ class MyPublicationsScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final email = FirebaseAuth.instance.currentUser?.email;
     final vehicleService = VehicleService();
 
@@ -80,6 +83,11 @@ class MyPublicationsScreen extends StatelessWidget {
               final data = docs[index].data();
               final vehicleId = docs[index].id;
               final images = List<String>.from(data['images'] ?? []);
+              final isSold = data['isSold'] ?? false;
+              final unreadAsync = ref.watch(
+                unreadCountForVehicleProvider(vehicleId),
+              );
+
               return Dismissible(
                 key: ValueKey(vehicleId),
                 direction: DismissDirection.endToStart,
@@ -106,24 +114,160 @@ class MyPublicationsScreen extends StatelessWidget {
                     }
                   }
                 },
-                child: VehicleCard(
-                  vehicleId: vehicleId,
-                  title: (data['name'] ?? '') as String,
-                  description: (data['description'] ?? '') as String,
-                  price: 'USD ${(data['price'] ?? 0).toString()}',
-                  icon: (data['emoji'] ?? '🚗') as String,
-                  publishedAt: _formatTimestamp(data['createdAt']),
-                  ownerName: (data['ownerName'] ?? 'Anónimo') as String,
-                  imageUrl: images.isNotEmpty ? images.first : null,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            EditPublicationScreen(vehicleId: vehicleId),
+                child: Stack(
+                  children: [
+                    Opacity(
+                      opacity: isSold ? 0.6 : 1.0,
+                      child: VehicleCard(
+                        vehicleId: vehicleId,
+                        title: (data['name'] ?? '') as String,
+                        description: (data['description'] ?? '') as String,
+                        price: 'USD ${(data['price'] ?? 0).toString()}',
+                        icon: (data['emoji'] ?? '🚗') as String,
+                        publishedAt: _formatTimestamp(data['createdAt']),
+                        ownerName: (data['ownerName'] ?? 'Anónimo') as String,
+                        imageUrl: images.isNotEmpty ? images.first : null,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  EditPublicationScreen(vehicleId: vehicleId),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                    if (isSold)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'VENDIDO',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Preguntas button with unread badge
+                          Stack(
+                            alignment: Alignment.topRight,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.help_outline,
+                                  color: Colors.blue,
+                                ),
+                                tooltip: 'Preguntas y respuestas',
+                                onPressed: () async {
+                                  // Mark notifications read on open
+                                  await ref
+                                      .read(notificationServiceProvider)
+                                      .markReadForVehicle(vehicleId);
+                                  if (context.mounted) {
+                                    final currentUid =
+                                        FirebaseAuth
+                                            .instance
+                                            .currentUser
+                                            ?.uid ??
+                                        '';
+                                    final ownerId =
+                                        (data['ownerId'] ?? '') as String;
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => QAScreen(
+                                          vehicleId: vehicleId,
+                                          sellerUserId: ownerId.isNotEmpty
+                                              ? ownerId
+                                              : currentUid,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                              unreadAsync.when(
+                                data: (count) => count > 0
+                                    ? Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '$count',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
+                                loading: () => const SizedBox.shrink(),
+                                error: (e, st) => const SizedBox.shrink(),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: Icon(
+                              isSold ? Icons.restart_alt : Icons.check_circle,
+                              color: isSold ? Colors.orange : Colors.green,
+                            ),
+                            tooltip: isSold
+                                ? 'Marcar como disponible'
+                                : 'Marcar como vendido',
+                            onPressed: () async {
+                              try {
+                                await vehicleService.toggleSoldStatus(
+                                  vehicleId,
+                                  !isSold,
+                                );
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        isSold
+                                            ? 'Vehículo marcado como disponible'
+                                            : 'Vehículo marcado como vendido',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: $e')),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
