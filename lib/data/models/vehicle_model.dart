@@ -11,6 +11,7 @@ class VehicleModel {
   final String lugar;
   final List<String> images;
   final DateTime? createdAt;
+  final bool isSold;
 
   const VehicleModel({
     this.id = '',
@@ -23,6 +24,7 @@ class VehicleModel {
     required this.lugar,
     this.images = const [],
     this.createdAt,
+    this.isSold = false,
   });
 
   factory VehicleModel.fromMap(Map<String, dynamic> map, String docId) {
@@ -41,6 +43,7 @@ class VehicleModel {
       createdAt: map['createdAt'] is Timestamp
           ? (map['createdAt'] as Timestamp).toDate()
           : null,
+      isSold: map['isSold'] ?? false,
     );
   }
 
@@ -57,6 +60,7 @@ class VehicleModel {
       'createdAt': createdAt != null
           ? Timestamp.fromDate(createdAt!)
           : FieldValue.serverTimestamp(),
+      'isSold': isSold,
     };
   }
 
@@ -71,6 +75,7 @@ class VehicleModel {
     String? lugar,
     List<String>? images,
     DateTime? createdAt,
+    bool? isSold,
   }) {
     return VehicleModel(
       id: id ?? this.id,
@@ -83,6 +88,7 @@ class VehicleModel {
       lugar: lugar ?? this.lugar,
       images: images ?? this.images,
       createdAt: createdAt ?? this.createdAt,
+      isSold: isSold ?? this.isSold,
     );
   }
 }

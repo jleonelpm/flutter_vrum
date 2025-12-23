@@ -68,4 +68,14 @@ class VehicleService {
       rethrow;
     }
   }
+
+  Future<void> toggleSoldStatus(String vehicleId, bool isSold) async {
+    try {
+      await _firestore.collection('vehicles').doc(vehicleId).update({
+        'isSold': isSold,
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
